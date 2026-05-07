@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Airdrop Crypto",
+    "slug": "airdrop-crypto",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.example.airdropcrypto"
+    },
+    "android": {
+      "package": "com.example.airdropcrypto",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B0F19"
+      }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#5B8DEF"
+        }
+      ]
+    ],
+    "extra": {
+      "API_BASE_URL": "http://192.168.55.143:4000",
+      "ADMOB_BANNER_ANDROID": "ca-app-pub-3940256099942544/6300978111",
+      "ADMOB_NATIVE_ANDROID": "ca-app-pub-3940256099942544/2247696110",
+      "ADMOB_REWARDED_ANDROID": "ca-app-pub-3940256099942544/5224354917",
+      "SENTRY_DSN": "",
+      "EAS_PROJECT_ID": ""
+    }
+  }
+}

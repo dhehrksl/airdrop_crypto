@@ -1,0 +1,36 @@
+{
+  "name": "airdrop-crypto-backend",
+  "version": "1.0.0",
+  "description": "AI 자동화 기반 가상화폐 에어드랍 정보 큐레이션 백엔드",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "crawl:once": "node src/jobs/runOnce.js",
+    "seed": "node src/jobs/seed.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.7",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.4.5",
+    "expo-server-sdk": "^3.10.0",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^8.0.0",
+    "mongoose": "^8.7.0",
+    "node-cron": "^3.0.3",
+    "node-telegram-bot-api": "^0.66.0",
+    "pino": "^9.4.0",
+    "pino-pretty": "^11.2.2",
+    "@sentry/node": "^8.30.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
