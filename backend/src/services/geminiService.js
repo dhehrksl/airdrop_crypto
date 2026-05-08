@@ -1,4 +1,5 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { withExponentialBackoff } = require('../utils/backoff'); // backoff 유틸리티 임포트
 const logger = require('../utils/logger');
 
 const SYSTEM_PROMPT = `너는 가상화폐 에어드랍 정보 분석가다. 입력된 원문 텍스트를 분석하여 아래 JSON 스키마에 맞는 결과를 반환하라.
@@ -6,8 +7,8 @@ const SYSTEM_PROMPT = `너는 가상화폐 에어드랍 정보 분석가다. 입
 스키마:
 {
   "title": string,             // 프로젝트명을 포함한 에어드랍 제목 (한국어)
-  "description": string,       // 참여 방법 3줄 요약 (한국어, 줄바꿈 \\n 포함)
-  "official_link": string,     // 공식 URL (없으면 빈 문자열)
+  "description": string,       // 참여 방법 3줄 요약 (한국어, 줄바꿈 \\n 포함). 원문에 "공식 채널 확인" 같은 문구가 있다면 해당 내용을 포함.
+  "official_link": string,     // 원문에서 "공식 링크", "Official Link", "Website" 등으로 명시된 URL을 최우선으로 추출. 없으면 원문 내에서 가장 관련성 높은 HTTP/HTTPS URL을 찾아서 추출. 그래도 없으면 빈 문자열.
   "end_date": string|null,     // ISO 8601 날짜 (없으면 null)
   "reward": string,            // 보상 규모 요약 (예: "토큰 500개", "총 $50,000 풀")
   "category": string,          // L2 | DeFi | NFT | Bounty | Testnet | Meme | Other 중 1개
@@ -64,25 +65,37 @@ function withTimeout(promise, ms) {
 }
 
 async function analyzeAirdrop(rawText, { timeoutMs = 15000 } = {}) {
+  // GEMINI_API_KEY가 설정되지 않았거나 USE_MOCK=true인 경우 AI 분석을 건너뛰고 mockAnalyze를 사용합니다.
   if (process.env.USE_MOCK === 'true' || !process.env.GEMINI_API_KEY) {
     return mockAnalyze(rawText);
   }
 
-  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  const modelName = process.env.GEMINI_MODEL || 'gemini-pro'; // gemini-1.5-flash 대신 gemini-pro 사용
   const model = getClient().getGenerativeModel({
     model: modelName,
     systemInstruction: SYSTEM_PROMPT,
     generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
   });
 
-  const result = await withTimeout(model.generateContent(rawText), timeoutMs);
+  // Gemini API 호출에 재시도 로직 적용
+  const result = await withExponentialBackoff(
+    () => withTimeout(model.generateContent(rawText), timeoutMs),
+    {
+      retries: 3, // 3번 재시도 (총 4번 시도)
+      baseMs: 1000, // 1초부터 시작하여 지수적으로 증가
+      shouldRetry: (err) => err.response?.status === 503 || err.code === 'TIMEOUT', // 503 또는 타임아웃 시 재시도
+    }
+  );
   const text = result?.response?.text?.() || '';
+  logger.info({ geminiRawResponseSnippet: text.slice(0, 500) }, 'Gemini raw response snippet'); // Gemini의 원본 응답 일부 로깅
   const parsed = tryParseJson(text);
   if (!parsed) {
     logger.warn({ snippet: text.slice(0, 200) }, 'Gemini JSON 파싱 실패 — drop');
+    logger.warn({ fullResponse: text }, 'Gemini full response for JSON parse failure'); // JSON 파싱 실패 시 전체 응답 로깅
     return null;
   }
 
+  logger.info({ parsedResult: parsed }, 'Gemini parsed result'); // 파싱된 JSON 결과 로깅
   return validate(parsed);
 }
 
@@ -140,14 +153,24 @@ function mockAnalyze(rawText) {
   if (m) tags.push(...new Set(m.map((s) => s.toLowerCase())));
 
   const titleMatch = rawText.match(/^([^\n]{1,80})/);
+  let title = titleMatch ? titleMatch[1].trim() : '에어드랍';
+  // 제목 클리닝: 불필요한 기호 제거 및 CamelCase 단어 분리
+  title = title
+    .replace(/(\d+°)/g, '') // 32° 같은 숫자+도 기호 제거
+    .replace(/([A-Z])/g, ' $1') // CamelCase 단어 사이에 공백 추가
+    .replace(/\s+/g, ' ') // 여러 공백을 하나로
+    .trim();
+
   const linkMatch = rawText.match(/https?:\/\/[^\s)]+/);
   const dateMatch = rawText.match(/(\d{4}-\d{2}-\d{2})/);
+  const rewardMatch = rawText.match(/(보상|reward):\s*([^\n]+)/i);
+
   return validate({
-    title: titleMatch ? titleMatch[1].trim() : '에어드랍',
+    title: title,
     description: rawText.split(/\n+/).slice(0, 3).join('\n').slice(0, 300) || '참여 방법 미상',
-    official_link: linkMatch ? linkMatch[0] : 'https://example.com',
+    official_link: linkMatch ? linkMatch[0] : '', // AI 비활성화 시 기본 링크는 빈 문자열로
     end_date: dateMatch ? dateMatch[1] : null,
-    reward: '미상',
+    reward: rewardMatch ? rewardMatch[2].trim() : '미상',
     category,
     tags,
     trust_score: Math.max(0, score),

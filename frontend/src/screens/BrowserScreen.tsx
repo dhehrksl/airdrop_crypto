@@ -35,18 +35,24 @@ export default function BrowserScreen({ route, navigation }: Props) {
       <WebView
         source={{ uri: url }}
         onLoadStart={() => setLoading(true)}
-        onLoadEnd={() => setLoading(false)}
+        onLoadEnd={(syntheticEvent) => {
+          const { nativeEvent } = syntheticEvent;
+          console.log('WebView onLoadEnd:', nativeEvent.url, 'loading:', nativeEvent.loading, 'canGoBack:', nativeEvent.canGoBack, 'title:', nativeEvent.title);
+          setLoading(false); // 로딩 완료 시 로딩 인디케이터 숨김
+        }}
         onError={(e) => {
           const status = (e.nativeEvent as any)?.statusCode;
-          if (status === 404 || status >= 400) {
-            setError('not_found');
-          } else {
-            setError('error');
-          }
+          console.error('WebView onError:', e.nativeEvent.url, 'code:', e.nativeEvent.code, 'description:', e.nativeEvent.description, 'status:', status);
+          // 어떤 종류의 로딩 실패든 에러 상태로 설정하여 EmptyState를 표시
+          setError('error');
+          setLoading(false); // 에러 발생 시 로딩 인디케이터 숨김
         }}
         onHttpError={(e) => {
-          const status = e.nativeEvent.statusCode;
-          if (status === 404 || status >= 400) setError('not_found');
+          const { nativeEvent } = e;
+          console.error('WebView onHttpError:', nativeEvent.url, 'statusCode:', nativeEvent.statusCode, 'description:', nativeEvent.description);
+          // HTTP 에러 발생 시 에러 상태로 설정하여 EmptyState를 표시
+          setError('error');
+          setLoading(false); // HTTP 에러 발생 시 로딩 인디케이터 숨김
         }}
         startInLoadingState
         renderLoading={() => (

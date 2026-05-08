@@ -73,7 +73,9 @@ export default function HomeScreen({ navigation }: Props) {
       </View>
 
       <SearchBar value={searchInput} onChange={setSearchInput} onSubmit={() => setActiveQ(searchInput.trim())} />
-      <CategoryChips value={category} onChange={setCategory} />
+      <View style={styles.categoryChipsContainer}> {/* 카테고리 칩 상단에 공간 확보를 위한 컨테이너 */}
+        <CategoryChips value={category} onChange={setCategory} />
+      </View>
 
       {fromCache ? (
         <View style={styles.cacheBanner}>
@@ -166,7 +168,8 @@ const styles = StyleSheet.create({
   iconBtn: { paddingHorizontal: 10, paddingVertical: 6 },
   iconBtnText: { color: colors.text, fontSize: 14, fontWeight: '600' },
   loaderBox: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  emptyContainer: { flexGrow: 1, justifyContent: 'center' },
+  categoryChipsContainer: { paddingBottom: 8 }, // CategoryChips 아래에 패딩 추가
+  emptyContainer: { flexGrow: 1, justifyContent: 'center', paddingVertical: 24 }, // EmptyState의 패딩을 줄여서 칩이 너무 커 보이지 않도록 조정
   footerBox: { paddingVertical: 16 },
   cacheBanner: { backgroundColor: colors.warning, paddingVertical: 6, alignItems: 'center' },
   cacheBannerText: { color: '#1a1a1a', fontSize: 12, fontWeight: '700' },

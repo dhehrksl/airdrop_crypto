@@ -52,8 +52,8 @@ export default function App() {
             headerTintColor: colors.accent,
             contentStyle: { backgroundColor: colors.bg },
           }}
-        >
-          <Stack.Screen name="Home" component={HomeScreen} options={{ title: '에어드랍 피드' }} />
+        > 
+          <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Detail" component={DetailScreen} options={{ title: '상세' }} />
           <Stack.Screen
             name="Browser"

@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-
 import AirdropCard from '../components/AirdropCard';
 import EmptyState from '../components/EmptyState';
 import { fetchAirdropsByIds, type Airdrop } from '../api/airdrops';
@@ -12,7 +11,6 @@ import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../../App';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MyPage'>;
-
 type Tab = 'bookmarks' | 'done';
 
 export default function MyPageScreen({ navigation }: Props) {

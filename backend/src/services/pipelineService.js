@@ -2,6 +2,7 @@ const Airdrop = require('../models/Airdrop');
 const { analyzeAirdrop } = require('./geminiService');
 const { hashContent } = require('./hashUtil');
 const { sendAlert } = require('../utils/alert');
+const { verifyUrl } = require('../utils/urlUtil'); // 추가: URL 유효성 검증 유틸리티
 const logger = require('../utils/logger');
 
 async function processItem(item) {
@@ -34,6 +35,13 @@ async function processItem(item) {
   if (!analyzed.official_link || analyzed.official_link.trim() === '') {
     logger.warn({ title: analyzed.title }, '공식 링크 없음 — drop');
     return { status: 'dropped', reason: 'missing_link' };
+  }
+
+  // 추가: official_link의 접근성 확인
+  const isLinkReachable = await verifyUrl(analyzed.official_link);
+  if (!isLinkReachable) {
+    logger.warn({ title: analyzed.title, link: analyzed.official_link }, '공식 링크 접근 불가 — drop');
+    return { status: 'dropped', reason: 'unreachable_link' };
   }
 
   const threshold = Number(process.env.TRUST_SCORE_THRESHOLD || 80);

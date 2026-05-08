@@ -102,25 +102,31 @@ export default function DetailScreen({ route, navigation }: Props) {
   const handleParticipate = async () => {
     if (!item) return;
     const url = item.official_link;
+    console.log('Attempting to participate. URL:', url); // Debug log: 시도하는 URL 출력
     if (!url) {
+      console.log('Official link is empty or null.'); // Debug log: URL이 비어있거나 null인 경우
       setToast('현재 해당 프로젝트 웹사이트에 접근할 수 없습니다');
       return;
     }
     if (Platform.OS === 'web') {
       participation.mark(item._id);
       window.open(url, '_blank', 'noopener,noreferrer');
+      console.log('Opened URL in new tab (web platform).'); // Debug log: 웹 플랫폼에서 새 탭으로 열림
       return;
     }
     try {
       const supported = await Linking.canOpenURL(url);
+      console.log('Linking.canOpenURL result:', supported); // Debug log: Linking.canOpenURL 결과 출력
       if (!supported) {
         setToast('현재 해당 프로젝트 웹사이트에 접근할 수 없습니다');
+        console.log('Linking.canOpenURL returned false.'); // Debug log: Linking.canOpenURL이 false를 반환한 경우
         return;
       }
-      participation.mark(item._id);
-      navigation.navigate('Browser', { url, title: item.title });
+      participation.mark(item._id); // 참여 완료 마킹
+      navigation.navigate('Browser', { url, title: item.title }); // 인앱 브라우저로 이동
     } catch {
       setToast('현재 해당 프로젝트 웹사이트에 접근할 수 없습니다');
+      console.log('Error caught during Linking.canOpenURL.'); // Debug log: Linking.canOpenURL 중 에러 발생
     }
   };
 
@@ -145,7 +151,7 @@ export default function DetailScreen({ route, navigation }: Props) {
   };
 
   if (loading) {
-    return (
+    return ( // SafeAreaView의 edges를 top, bottom 모두 적용하여 하단 배너 겹침 문제 해결
       <SafeAreaView style={styles.center}>
         <ActivityIndicator color={colors.accent} />
       </SafeAreaView>
@@ -193,6 +199,13 @@ export default function DetailScreen({ route, navigation }: Props) {
           <MetaRow label="출처" value={item.sources?.join(', ') || '미상'} />
           {item.tags?.length ? <MetaRow label="태그" value={item.tags.join(', ')} /> : null}
         </View>
+
+        {item.trust_score < 80 && item.scam_reasons?.length > 0 ? ( // 신뢰도 80점 미만일 때 스캠 의심 사유 표시
+          <View style={styles.scamWarningBox}>
+            <Text style={styles.scamWarningTitle}>⚠️ 스캠 의심 사유</Text>
+            {item.scam_reasons.map((reason, i) => <Text key={i} style={styles.scamWarningText}>- {reason}</Text>)}
+          </View>
+        ) : null}
 
         <Text style={styles.sectionTitle}>참여 방법</Text>
         {requiresUnlock ? (
@@ -307,4 +320,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ctaText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  scamWarningBox: {
+    backgroundColor: colors.dangerSoft,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    marginBottom: 24,
+  },
+  scamWarningTitle: { color: colors.danger, fontWeight: '700', fontSize: 15, marginBottom: 8 },
+  scamWarningText: { color: colors.danger, fontSize: 13, lineHeight: 20 },
 });

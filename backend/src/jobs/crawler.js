@@ -21,7 +21,9 @@ async function collectAll() {
   const urls = parseList(process.env.WEB_SOURCES);
 
   const [tg, web] = await Promise.all([collectFromTelegram(channels), collectFromUrls(urls)]);
+  logger.info({ telegramCount: tg.length, webCount: web.length, webSources: urls }, '수집 결과');
   const all = [...tg, ...web];
+
   if (all.length === 0) {
     logger.warn('수집 결과 0건 — Mock 폴백');
     return mockSamples;

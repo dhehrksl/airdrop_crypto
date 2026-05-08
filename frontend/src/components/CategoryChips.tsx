@@ -46,20 +46,20 @@ export default function CategoryChips({ value, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { paddingHorizontal: 16, paddingBottom: 8 },
+  row: { paddingBottom: 8 }, // ScrollView 자체의 수평 패딩 제거
   chip: {
-    minWidth: 64,
-    paddingHorizontal: 12,
+    minWidth: 65, // 칩의 최소 너비를 더 줄여 전체적인 크기 감소
+    paddingHorizontal: 12, // 텍스트 좌우 여백 조정
     paddingVertical: 6,
     borderRadius: 14,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    marginRight: 6,
+    marginHorizontal: 4, // 칩 간의 간격 및 화면 가장자리 간격 조절
     alignItems: 'center',
     justifyContent: 'center',
   },
   chipActive: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
-  label: { color: colors.textMuted, fontSize: 13, fontWeight: '600', textAlign: 'center' },
-  labelActive: { color: colors.accent, fontWeight: '700' },
+  label: { color: colors.textMuted, fontSize: 13, fontWeight: '700', textAlign: 'center' }, // 활성/비활성 동일한 fontWeight로 설정
+  labelActive: { color: colors.accent, fontWeight: '700' }, // 활성/비활성 동일한 fontWeight로 설정
 });
